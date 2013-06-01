@@ -236,6 +236,36 @@ module.exports = function() {
         done();
       });
     });
+
+    it("should correctly fire the subsequent puback even if the publish raised an exception", function(done) {
+      var publish = [
+        48, 6, // Header 
+        0, 4, // Topic length
+        116, 101, 115, 116 // Topic
+        // Empty payload
+      ];
+
+      this.stream.write(new Buffer(publish));
+
+      var puback = [
+        64, 2, // Header
+        0, 2 // Message id
+      ];
+
+      this.stream.write(new Buffer(puback));
+
+      this.conn.once("error", function() {
+        // ignoring this for the first time
+      });
+
+      this.conn.on('publish', function(packet) {
+        throw new Error("we are really really bad");
+      });
+
+      this.conn.once("puback", function() {
+        done();
+      });
+    });
   });
 
   describe('puback', function() {
